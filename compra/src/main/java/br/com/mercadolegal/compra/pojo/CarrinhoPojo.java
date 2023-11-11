@@ -9,7 +9,6 @@ import br.com.mercadolegal.compra.entidade.Carrinho;
 
 public class CarrinhoPojo {
 
-	
 	private Long id;
 	
 	private UsuarioPojo usuario;

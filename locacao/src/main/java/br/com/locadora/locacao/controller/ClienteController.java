@@ -48,16 +48,16 @@ public class ClienteController {
 	}
 	
 	@PostMapping
-	public ClientePojo create(@RequestBody ClientePojo usuarioPojo) {
+	public ClientePojo create(@RequestBody ClientePojo clientePojo) {
 
-		return new ClientePojo(clienteRepository.save(usuarioPojo.toEntity()));
+		return new ClientePojo(clienteRepository.save(clientePojo.toEntity()));
 
 	}
 	
 	@PutMapping
-	public ClientePojo update(@RequestBody ClientePojo usuarioPojo) {
+	public ClientePojo update(@RequestBody ClientePojo clientePojo) {
 
-		return new ClientePojo(clienteRepository.save(usuarioPojo.toEntity()));
+		return new ClientePojo(clienteRepository.save(clientePojo.toEntity()));
 
 	}
 

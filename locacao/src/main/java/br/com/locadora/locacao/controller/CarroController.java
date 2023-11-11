@@ -47,13 +47,13 @@ private final CarroRepository carroRepository;
 	}
 	
 	@PostMapping
-	public CarroPojo create(@RequestBody CarroPojo produtoPojo) {
-		return new CarroPojo(carroRepository.save(produtoPojo.toEntity()));
+	public CarroPojo create(@RequestBody CarroPojo carroPojo) {
+		return new CarroPojo(carroRepository.save(carroPojo.toEntity()));
 	}
 
 	@PutMapping
-	public CarroPojo update(@RequestBody CarroPojo produtoPojo) {
-		return new CarroPojo(carroRepository.save(produtoPojo.toEntity()));
+	public CarroPojo update(@RequestBody CarroPojo carroPojo) {
+		return new CarroPojo(carroRepository.save(carroPojo.toEntity()));
 	}
 
 	@DeleteMapping(path = "/{id}")

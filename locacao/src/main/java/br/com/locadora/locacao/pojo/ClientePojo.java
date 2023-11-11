@@ -10,7 +10,6 @@ public class ClientePojo {
 
 	private Long id;
 	private String nome;
-	private String senha;
 	
 	public ClientePojo(Cliente cliente) {
 		
@@ -32,19 +31,12 @@ public class ClientePojo {
 	public void setNome(String nome) {
 		this.nome = nome;
 	}
-	public String getSenha() {
-		return senha;
-	}
-	public void setSenha(String senha) {
-		this.senha = senha;
-	}
 	
 	@JsonIgnore
 	public Cliente toEntity() {
 		Cliente cliente = new Cliente();
 		cliente.setId(id);
 		cliente.setNome(nome);
-		cliente.setSenha(senha);
 		return cliente;
 	}
 	
