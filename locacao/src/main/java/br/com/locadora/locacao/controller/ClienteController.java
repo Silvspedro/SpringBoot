@@ -1,9 +1,9 @@
 package br.com.locadora.locacao.controller;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,58 +13,62 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.locadora.locacao.entidade.Cliente;
+import br.com.locadora.locacao.exception.NegocioException;
 import br.com.locadora.locacao.pojo.ClientePojo;
-import br.com.locadora.locacao.repository.ClienteRepository;
-
+import br.com.locadora.locacao.service.ClienteService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/clientes")
 public class ClienteController {
 
-	private final ClienteRepository clienteRepository;
-	
-	public ClienteController(ClienteRepository clienteRepository) {
-		this.clienteRepository = clienteRepository;
+	private final ClienteService clienteService;
+
+	public ClienteController(ClienteService clienteService) {
+		this.clienteService = clienteService;
 	}
-	
+
 	@GetMapping
-	public List<ClientePojo> getAll() {
-		List<Cliente> listCliente = clienteRepository.findAll();
-		List<ClientePojo> listClientePojo = new ArrayList<>();
-		for (Cliente cliente : listCliente) {
-			listClientePojo.add(new ClientePojo(cliente));
-		}
-		return listClientePojo;
+	@Operation(summary = "Recupera Todos usuarios", description = "Recupera todos os Usuarios cadastrados")
+	public ResponseEntity<List<ClientePojo>> getAll() {
+		return ResponseEntity.ok(clienteService.recuperarClientes());
 	}
 
 	@GetMapping(path = "/{id}")
-	public ClientePojo get(@PathVariable Long id) {
-		Optional<Cliente> clienteOptional = clienteRepository.findById(id);
-		if (clienteOptional.isPresent()) {
-			return new ClientePojo(clienteOptional.get());
+	@Operation(summary = "Recupera usuarios por ID", description = "Recupera Usuarios especificos cadastrados")
+	public ResponseEntity<ClientePojo> get(@PathVariable Long id) {
+		ClientePojo clientePojo = clienteService.recuperarCliente(id);
+		if (clientePojo == null) {
+			return ResponseEntity.notFound().build();
 		}
-		return new ClientePojo();
+		return ResponseEntity.ok(clientePojo);
 	}
-	
+
 	@PostMapping
-	public ClientePojo create(@RequestBody ClientePojo clientePojo) {
-
-		return new ClientePojo(clienteRepository.save(clientePojo.toEntity()));
-
+	@Operation(summary = "Cria novos usuarios", description = "Cria novos usuarios para inserção no sistema")
+	public ResponseEntity<?> create(@RequestBody ClientePojo clientePojo) {
+		try {
+			return new ResponseEntity<ClientePojo>(clienteService.salvar(clientePojo.toEntity()), HttpStatus.CREATED);
+		} catch (NegocioException e) {
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
+		}
 	}
-	
+
 	@PutMapping
-	public ClientePojo update(@RequestBody ClientePojo clientePojo) {
-
-		return new ClientePojo(clienteRepository.save(clientePojo.toEntity()));
-
+	@Operation(summary = "Altera usuarios", description = "Altera algum requisito de Usuarios já cadastrados")
+	public ResponseEntity<?> update(@RequestBody ClientePojo clientePojo) {
+		try {
+			return ResponseEntity.ok(clienteService.salvar(clientePojo.toEntity()));
+		} catch (NegocioException e) {
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
+		}
 	}
 
 	@DeleteMapping(path = "/{id}")
-	public void delete(@PathVariable Long id) {
-		clienteRepository.deleteById(id);
-
+	@Operation(summary = "Deleta usuarios", description = "Deleta Usuarios excluindo os seus cadastrados")
+	public ResponseEntity<?> delete(@PathVariable Long id) {
+		clienteService.deletarCliente(id);
+		return ResponseEntity.ok().build();
 	}
-	
+
 }

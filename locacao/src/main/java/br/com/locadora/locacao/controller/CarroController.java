@@ -1,9 +1,9 @@
 package br.com.locadora.locacao.controller;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,52 +13,61 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.locadora.locacao.entidade.Carro;
 import br.com.locadora.locacao.pojo.CarroPojo;
-import br.com.locadora.locacao.repository.CarroRepository;
+import br.com.locadora.locacao.exception.NegocioException;
+import br.com.locadora.locacao.service.CarroService;
+import io.swagger.v3.oas.annotations.Operation;
 
 @RestController
 @RequestMapping("/carros")
 public class CarroController {
+	private final CarroService carroService;
 
-private final CarroRepository carroRepository;
-	
-	public CarroController(CarroRepository carroRepository) {
-		this.carroRepository = carroRepository;
+	public CarroController( CarroService carroService) {
+		this.carroService = carroService;
 	}
-	
+
 	@GetMapping
-	public List<CarroPojo> getAll() {
-		List<Carro> listCarro = carroRepository.findAll();
-		List<CarroPojo> listCarroPojo = new ArrayList<>();
-		for (Carro carro : listCarro) {
-			listCarroPojo.add(new CarroPojo(carro));
-		}
-		return listCarroPojo;
+	@Operation(summary = "Recupera Todos os Carros", description = "Recupera todos os Carros cadastrados")
+	public ResponseEntity<List<CarroPojo>> getAll() {
+		return ResponseEntity.ok(carroService.recuperarCarros());
 	}
-	
+
 	@GetMapping(path = "/{id}")
-	public CarroPojo get(@PathVariable Long id) {
-		Optional<Carro> carroOptional = carroRepository.findById(id);
-		if (carroOptional.isPresent()) {
-			return new CarroPojo(carroOptional.get());
+	@Operation(summary = "Recupera Carros por ID", description = "Recupera Carros especificos cadastrados")
+	public ResponseEntity<CarroPojo> get(@PathVariable Long id) {
+		CarroPojo carroPojo = carroService.recuperarCarro(id);
+		if (carroPojo == null) {
+			return ResponseEntity.notFound().build();
 		}
-		return new CarroPojo();
+		return ResponseEntity.ok(carroPojo);
 	}
-	
+
 	@PostMapping
-	public CarroPojo create(@RequestBody CarroPojo carroPojo) {
-		return new CarroPojo(carroRepository.save(carroPojo.toEntity()));
+	@Operation(summary = "Cria novos Carros", description = "Cria novos Carros para inserção no sistema")
+	public ResponseEntity<?> create(@RequestBody CarroPojo carroPojo) {
+		try {
+			return new ResponseEntity<CarroPojo>(carroService.salvar(carroPojo.toEntity()), HttpStatus.CREATED);
+		} catch (NegocioException e) {
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
+		}
 	}
 
 	@PutMapping
-	public CarroPojo update(@RequestBody CarroPojo carroPojo) {
-		return new CarroPojo(carroRepository.save(carroPojo.toEntity()));
+	@Operation(summary = "Altera Carros", description = "Altera algum requisito de Carros já cadastrados")
+	public ResponseEntity<?> update(@RequestBody CarroPojo carroPojo) {
+		try {
+			return ResponseEntity.ok(carroService.salvar(carroPojo.toEntity()));
+		} catch (NegocioException e) {
+			return new ResponseEntity<String>(e.getMessage(), HttpStatus.PRECONDITION_FAILED);
+		}
 	}
 
 	@DeleteMapping(path = "/{id}")
-	public void delete(@PathVariable Long id) {
-		carroRepository.deleteById(id);
+	@Operation(summary = "Deleta Carros", description = "Deleta Carros excluindo os seus cadastrados")
+	public ResponseEntity<?> delete(@PathVariable Long id) {
+		carroService.deletarCarro(id);
+		return ResponseEntity.ok().build();
 	}
-	
+
 }
