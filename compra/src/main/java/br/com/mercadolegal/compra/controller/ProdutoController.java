@@ -1,9 +1,11 @@
 package br.com.mercadolegal.compra.controller;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 
+import java.util.List;
+
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,51 +15,58 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.com.mercadolegal.compra.entidade.Produto;
+
+import br.com.mercadolegal.compra.exception.NegocioException;
 import br.com.mercadolegal.compra.pojo.ProdutoPojo;
-import br.com.mercadolegal.compra.repository.ProdutoRepository;
+import br.com.mercadolegal.compra.service.ProdutoService;
 
 @RestController
 @RequestMapping("/produtos")
 public class ProdutoController {
-	private final ProdutoRepository produtoRepository;
+	private final ProdutoService produtoService;
 
-	public ProdutoController(ProdutoRepository produtoRepository) {
-		this.produtoRepository = produtoRepository;
+	public ProdutoController(ProdutoService produtoService) {
+		this.produtoService = produtoService;
 
 	}
 
 	@GetMapping
-	public List<ProdutoPojo> getAll() {
-		List<Produto> listProduto = produtoRepository.findAll();
-		List<ProdutoPojo> listProdutoPojo = new ArrayList<>();
-		for (Produto produto : listProduto) {
-			listProdutoPojo.add(new ProdutoPojo(produto));
-		}
-		return listProdutoPojo;
+	public ResponseEntity<List<ProdutoPojo>> getAll() {
+		return ResponseEntity.ok(produtoService.recuperarProdutos());
+		
 	}
 
 	@GetMapping(path = "/{id}")
-	public ProdutoPojo get(@PathVariable Long id) {
-		Optional<Produto> produtoOptional = produtoRepository.findById(id);
-		if (produtoOptional.isPresent()) {
-			return new ProdutoPojo(produtoOptional.get());
+	public ResponseEntity<ProdutoPojo> get(@PathVariable Long id) {
+		ProdutoPojo produtoPojo = produtoService.recuperarProduto(id);
+		if (produtoPojo == null) {
+			return ResponseEntity.notFound().build();
 		}
-		return new ProdutoPojo();
+		return ResponseEntity.ok(produtoPojo);
 	}
 
 	@PostMapping
-	public ProdutoPojo create(@RequestBody ProdutoPojo produtoPojo) {
-		return new ProdutoPojo(produtoRepository.save(produtoPojo.toEntity()));
+	public ResponseEntity<?> create(@RequestBody ProdutoPojo produtoPojo) {
+		try {
+			return new ResponseEntity<ProdutoPojo>(produtoService.salvar(produtoPojo.toEntity()),HttpStatus.CREATED);
+		} catch (NegocioException e) {
+			return new ResponseEntity<String>(e.getMessage(),HttpStatus.PRECONDITION_FAILED);
+		}
+		
 	}
 
 	@PutMapping
-	public ProdutoPojo update(@RequestBody ProdutoPojo produtoPojo) {
-		return new ProdutoPojo(produtoRepository.save(produtoPojo.toEntity()));
-	}
+	public ResponseEntity<?> update(@RequestBody ProdutoPojo produtoPojo) {
+		try {
+			return ResponseEntity.ok(produtoService.salvar(produtoPojo.toEntity()));
+		} catch (NegocioException e) {
+			return new ResponseEntity<String>(e.getMessage(),HttpStatus.PRECONDITION_FAILED);
+		} 
+	} 
 
 	@DeleteMapping(path = "/{id}")
-	public void delete(@PathVariable Long id) {
-		produtoRepository.deleteById(id);
+	public ResponseEntity<?> delete(@PathVariable Long id) {
+		produtoService.deletarProduto(id);
+		return ResponseEntity.ok().build();
 	}
 }
